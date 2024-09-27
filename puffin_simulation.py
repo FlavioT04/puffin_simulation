@@ -1,3 +1,4 @@
+from land_generator import LandGenerator
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,9 +16,11 @@ def simulate_puffin_movement(max_steps=100, step_size=0.1):
     - positions: A list of positions (x, y) the puffin has moved through.
     """
 
+    # Instance of the LandGenerator class
+    gull_island = LandGenerator("Gull Island", 0, 0)
+
     # Starting position
-    island_g = np.array([0.0, 0.0])
-    puffin_position = island_g.copy()
+    puffin_position = np.array(gull_island.get_position(), dtype=float)
 
     # Store puffin's positions for visualization
     positions = [puffin_position.copy()]
