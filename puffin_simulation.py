@@ -3,24 +3,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def simulate_puffin_movement(max_steps=100, step_size=0.1):
+def simulate_puffin_movement(source, destination, max_steps=100, step_size=0.1):
     """
     Simulates the movement of a puffin from island G (origin) towards a random direction
     and visualizes the until it reaches a location west to the origin.
 
-    Parameters:
-    - max_steps: Maximum numberof steps the puffin can take.
+    Args:
+    - source (LandGenerator): The location where puffins are launched
+    - destination (LandGenerator): The location where puffins end up
+    - max_steps: Maximum number of steps the puffin can take.
     - step_size: Distance covered in each step.
 
     Returns:
     - positions: A list of positions (x, y) the puffin has moved through.
     """
 
-    # Instance of the LandGenerator class
-    gull_island = LandGenerator("Gull Island", 0, 0)
-
     # Starting position
-    puffin_position = np.array(gull_island.get_position(), dtype=float)
+    puffin_position = np.array(source.get_position(), dtype=float)
 
     # Store puffin's positions for visualization
     positions = [puffin_position.copy()]
@@ -44,12 +43,12 @@ def simulate_puffin_movement(max_steps=100, step_size=0.1):
     positions = np.array(positions)
 
     # Plot the simulation
-    plot_puffin_movement(positions)
+    plot_puffin_movement(positions, source, destination)
 
     return positions
 
 
-def plot_puffin_movement(positions):
+def plot_puffin_movement(positions, source, destination):
     """
     Plots the puffin's movement based on a list of positions.
     """
@@ -57,12 +56,13 @@ def plot_puffin_movement(positions):
     # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot(positions[:, 0], positions[:, 1], marker='o', label='Puffin Path')
-    plt.scatter(0, 0, color='red', label='Gull Island (Origin)', zorder=5)
+    plt.scatter(*source.get_position(), color='red', label=f'{source.name} (Origin)', zorder=5)
+    plt.scatter(*destination.get_position(), color='blue', label=f'{destination.name} (Destination)')
 
     # Add grid, labels, and legend
     plt.xlim(-2, 2) # x-axis limits
     plt.ylim(-4, 4) # y-axis limits
-    plt.axvline(x=-1, color='gray', linestyle='--', label='Witless Bay (Destination)')
+    plt.axvline(x=-1, color='gray', linestyle='--', label='Boundary (Destination)')
     plt.title('Puffin Simulation')
     plt.xlabel('x Position')
     plt.ylabel('y Position')
