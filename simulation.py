@@ -47,7 +47,7 @@ class Simulation():
         puffins_reached_destination = 0
         for i in range(0, self.num_of_puffins):
             puffin = self.spawn_puffin(self.source)    # GeoSeries Point object
-            direction = self.random_angle((5*np.pi)/6, (7*np.pi/6))    # Angle within [150, 210]
+            direction = self.random_angle((5*np.pi)/6, (7*np.pi/6))    # Angle within [150, 210)
             destination_reached = False
             while not destination_reached:
                 puffin = self.move_puffin(puffin, direction)
@@ -117,7 +117,7 @@ class Simulation():
     
     def random_angle(self, min, max):
         """
-        Returns an angle within the closed interval [min, max] in radians
+        Returns an angle within the half-open interval [min, max) in radians
 
         Parameters:
             - min (float): lowerbound of the interval
