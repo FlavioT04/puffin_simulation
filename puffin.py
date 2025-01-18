@@ -72,17 +72,3 @@ class Puffin():
         dy = np.sin(direction) * 0.00006
         new_position = gpd.GeoSeries.translate(object, dx, dy)
         return new_position
-        
-
-    def create_vector(self, origin, crs):
-        """
-        Creates a vector of length x
-        """
-        coords_1 = origin.get_coordinates()
-        coords_2 = self.move(self.position, self.direction)
-        x_1 = coords_1.x.iloc[0] 
-        y_1 = coords_1.y.iloc[0] 
-        x_2 = coords_2.x.iloc[0]
-        y_2 = coords_2.y.iloc[0]
-        vector = gpd.GeoSeries(LineString([(x_1, y_1), (x_2, y_2)]), crs=crs)
-        return vector
