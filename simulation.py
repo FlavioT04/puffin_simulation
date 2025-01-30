@@ -1,7 +1,7 @@
 import geopandas as gpd
 import numpy as np
 from shapely import Point, LineString
-from puffin_testing import Puffin
+from puffin import Puffin
 import matplotlib.pyplot as plt
 
 
