@@ -1,4 +1,5 @@
 import geopandas as gpd
+import matplotlib.pyplot as plt
 from simulation import simulation
 
 
@@ -20,13 +21,14 @@ def main():
 
     # run simulation
     sim_gull_gdf = simulation(gull_polyline, witless_bay_polyline, puffins, crs)
-    # sim_great_gdf = simulation(great_polyline, witless_bay_polyline, puffins, crs)
+    sim_great_gdf = simulation(great_polyline, witless_bay_polyline, puffins, crs)
 
     # print results
-    # print(sim_gull_gdf)
-    print()
-    # print(sim_great_gdf)
-    print()
+    fig, ax = plt.subplots(figsize=(8, 8))
+    sim_gull_gdf.plot(ax=ax, color='blue')
+    sim_great_gdf.plot(ax=ax, color='green')
+    witless_bay_polyline.plot(ax=ax, color='red', lw=0.2)
+    plt.show()
 
 if __name__ == '__main__':
     main()
