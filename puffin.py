@@ -8,10 +8,10 @@ class Puffin():
         - steps (int): number of steps left
         - crs (int): coordinate reference system
     '''
-    def __init__(self, position, line, direction, steps=100, crs=4269):
+    def __init__(self, position, vector, direction, steps=100, crs=4269):
 
         self.position = position
-        self.line = line
+        self.vector = vector
         self.direction = direction
         self.steps = steps
         self.crs = crs
@@ -22,8 +22,8 @@ class Puffin():
     def set_direction(self, direction):
         self.direction = direction
 
-    def set_line(self, line):
-        self.line = line
+    def set_vector(self, new_vector):
+        self.vector = new_vector
 
     def set_steps(self, n):
         self.steps = n
@@ -34,8 +34,8 @@ class Puffin():
     def get_direction(self):
         return self.direction 
 
-    def get_line(self):
-        return self.line
+    def get_vector(self):
+        return self.vector
     
     def get_steps(self):
         return self.steps

@@ -21,6 +21,17 @@ Returns:
 '''
 def simulation(start, destination, num_puffins, crs):
 
+    # files needed
+    witless_bay_grid = gpd.read_file('files/Grid_puffmap_2km/Grid_puffmap_2km.shp').to_crs(epsg=crs)
+
+    # settings
+    b_height = 6
+    b_angle = np.pi/4
+
+    # modes
+    bouncing_angle = False
+    bouncing_wall = True
+
     # spawn puffins and store them in a array
     puffins = [spawn_puffin(start, crs) for i in range(num_puffins)]
 
@@ -64,13 +75,26 @@ def simulation(start, destination, num_puffins, crs):
             elif puffin_vector.intersects(destination).any():
 
                 # update attributes of puffin
-                intersection_point = puffin_vector.intersection(destination).iloc[0]
-                new_coordinates = shapely.get_coordinates(intersection_point)[0]
-                new_x = new_coordinates[0]
-                new_y = new_coordinates[1]
+                intersection_point = puffin_vector.intersection(destination).to_crs(crs)
+                new_coordinates = intersection_point.get_coordinates().iloc[0]
+                new_x = new_coordinates.iloc[0]
+                new_y = new_coordinates.iloc[1]
                 puffin.set_position((new_x, new_y))
                 puffin.set_vector(puffin_vector)
 
+                # when bouncing_wall is True, puffin bounces depending on the elevation of the intersecting geometry
+                if bouncing_wall == True:
+                    searching = True
+                    i = 0
+                    while searching and i < len(witless_bay_grid):
+                        cell_geometry = witless_bay_grid.iloc[i]['geometry']
+                        if cell_geometry.intersects(puffin_vector.iloc[0]):
+                            searching = False
+                        i += 1
+                    if witless_bay_grid.iloc[i-1]['MeanElevat'] < b_height:
+                        print('Puffin can keep on moving')
+                        print(witless_bay_grid.iloc[i-1]['MeanElevat'])
+        
                 # stop puffin
                 is_moving = False
 
