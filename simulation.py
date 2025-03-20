@@ -39,6 +39,7 @@ def simulation(start, destination, num_puffins, crs):
     position = []
     origin = []
     geometry = []       # shapely.Point list
+    vector_geometry = []
 
     # start simulation
     in_progress = True
@@ -51,7 +52,6 @@ def simulation(start, destination, num_puffins, crs):
             continue
 
         puffin = puffins.pop()
-        direction = puffin.get_direction()
         puffin_vector = puffin.get_vector()
 
         # store puffin's initial position
@@ -61,56 +61,90 @@ def simulation(start, destination, num_puffins, crs):
         is_moving = True
 
         while is_moving:
-            dx = np.cos(direction) * 0.0005              # change in x and y
-            dy = np.sin(direction) * 0.0005        
-            puffin_vector = puffin_vector.translate(dx, dy)
-            puffin.set_steps(puffin.get_steps()-1)
+            
+            # move puffin
+            puffin_vector = puffin.move()
 
             # check if puffin has no steps left
             if puffin.get_steps() < 1:
+                print('-------------------------------')
                 print('puffin killed')
+                print('-------------------------------')
                 is_moving = False
 
             # check if puffin has reached their destination
             elif puffin_vector.intersects(destination).any():
 
-                # update attributes of puffin
-                intersection_point = puffin_vector.intersection(destination).to_crs(crs)
-                new_coordinates = intersection_point.get_coordinates().iloc[0]
-                new_x = new_coordinates.iloc[0]
-                new_y = new_coordinates.iloc[1]
-                puffin.set_position((new_x, new_y))
+                # update vector
                 puffin.set_vector(puffin_vector)
 
                 # when bouncing_wall is True, puffin bounces depending on the elevation of the intersecting geometry
                 if bouncing_wall == True:
-                    searching = True
-                    i = 0
-                    while searching and i < len(witless_bay_grid):
-                        cell_geometry = witless_bay_grid.iloc[i]['geometry']
-                        if cell_geometry.intersects(puffin_vector.iloc[0]):
-                            searching = False
-                        i += 1
-                    if witless_bay_grid.iloc[i-1]['MeanElevat'] < b_height:
-                        print('Puffin can keep on moving')
-                        print(witless_bay_grid.iloc[i-1]['MeanElevat'])
+                    
+                    # get the elevation of the cell
+                    cell_elevation = intersecting_cell(witless_bay_grid, puffin_vector)['MeanElevat']
+
+                    # check conditions
+                    if cell_elevation <= b_height:
+                        print('------Puffin moves inland------')
+                        print('cell elevation:', cell_elevation)
+                        puffin.move()
+                        while is_moving:
+                            # get random integer from 0 to 100 (exclusive)
+                            random_num = np.random.randint(0, 100)
+                            print(random_num)        
+                            if cell_elevation >= 0 and cell_elevation <= 2:
+                                if random_num < 50:
+                                    is_moving = False
+                                else: 
+                                    for i in range(20):
+                                        puffin_vector = puffin.move()
+                            if cell_elevation > 2 and cell_elevation <= 4:
+                                if random_num < 75:
+                                    is_moving = False
+                                else: 
+                                    for i in range(20):
+                                        puffin_vector = puffin.move()
+                            if cell_elevation > 4:
+                                is_moving = False
+                            if cell_elevation < 0:
+                                print('elevation is negative')
+                                is_moving = False
+                            
+                            if is_moving:
+                                cell = intersecting_cell(witless_bay_grid, puffin_vector)
+                                if cell['cell_ID'] == 'None':
+                                    print('new cell elevation:', None)
+                                    is_moving = False
+                                else:
+                                    cell_elevation = cell['MeanElevat']
+                                print('new cell elevation:', cell_elevation)
+                    else:
+                        print('--------puffin bounces--------')
+                        print('cell elevation:', cell_elevation)
         
                 # stop puffin
                 is_moving = False
 
             if not is_moving:
                 if puffin.get_steps() > 0:
-                    print('puffin reached distination')
+                    print('puffin stopped')
                 # add data to the respective lists
                 position.append(puffin.get_position())
+                vector_geometry.append(puffin.get_vector().iloc[0])
                 geometry.append(Point(puffin.get_position()[0], puffin.get_position()[1]))
+                print()
         
 
     # geodataframe                
     d = {'position': position, 'origin': origin, 'geometry': geometry}
     gdf = gpd.GeoDataFrame(d, crs=crs)
+
+    # vector geodataframe
+    v_d = {'geometry': vector_geometry}
+    v_gdf = gpd.GeoDataFrame(v_d, crs=crs)
     
-    return gdf
+    return gdf, v_gdf
 
 '''
 This function creates an instance of the Puffin class.
@@ -125,7 +159,7 @@ Returns:
 def spawn_puffin(spawn, crs):
 
     # num of steps a puffin can take
-    steps = 10000
+    steps = 5000
 
     # get a random point within the geometry of the spawn
     origin = spawn.sample_points(size=1)
@@ -137,7 +171,7 @@ def spawn_puffin(spawn, crs):
     coords = origin.get_coordinates().iloc[0]
     x = coords['x']    
     y = coords['y']
-    dx = x + 0.005 * np.cos(np.pi)
+    dx = x + 0.00005 * np.cos(np.pi)
     dy = y
     vector = gpd.geopandas.GeoSeries(LineString([Point(dx, dy), Point(x, y)])).set_crs(epsg=crs)
 
@@ -240,3 +274,25 @@ def clip_geometry(geometry, point):
 
     return clipped
 
+'''
+This function looks for the cell containing the given puffin
+
+Args:
+    - grid (geopandas.GeoDataFrame): grid to be used in the search
+    - puffin_vector (geopandas.GeoSeries): geometry of the puffin
+
+Returns:
+    - cell (geopandas.GeoSeries): cell containing the given puffin
+'''
+def intersecting_cell(grid, puffin_vector):
+    searching = True
+    cell = gpd.GeoDataFrame({'cell_ID': ['None'], 'geometry': Point(0, 0)}, crs=grid.crs).iloc[0]
+    i = 0
+    while searching and i < len(grid):
+        cell_geometry = grid.iloc[i]['geometry']
+        if cell_geometry.intersects(puffin_vector.iloc[0]):
+            cell = grid.iloc[i]
+            searching = False
+        else:
+            i += 1
+    return cell        
