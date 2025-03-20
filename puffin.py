@@ -1,3 +1,5 @@
+import numpy as np
+import geopandas as gpd
 
 class Puffin():
     '''
@@ -39,3 +41,16 @@ class Puffin():
     
     def get_steps(self):
         return self.steps
+    
+    def move(self):
+        dx = np.cos(self.direction) * 0.00005         # change in x and y
+        dy = np.sin(self.direction) * 0.00005
+        self.vector = self.vector.translate(dx, dy)
+        self.steps -= 1
+
+        # update position
+        new_x = self.position[0] + dx
+        new_y = self.position[1] + dy
+        self.position = (new_x, new_y)
+
+        return self.vector
